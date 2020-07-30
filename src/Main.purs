@@ -27,7 +27,8 @@ data Env = Prod | Dev
 type AppEnv = {
   lastUpdated :: Date,
   env :: Env,
-  title :: String
+  title :: String,
+  dispatch :: Action -> Unit
 }
 
 -- clickCounter :: Int -> String
@@ -41,41 +42,44 @@ headerHtmlRdr = do
   {title} <- ask
   pure $ headerHtml title
 
-refreshDebugRdr :: AppState -> Reader AppEnv DocumentFragment
-refreshDebugRdr state = do
-  {env, lastUpdated} <- ask
+refreshDebugRdr :: Reader AppEnv DocumentFragment
+refreshDebugRdr = do
+  {env, lastUpdated, dispatch} <- ask
   pure $ 
     case env of
-      Dev -> refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked state)
+      Dev -> refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked)
       _ -> emptyHtml
 
 contentRdr :: AppState -> Reader AppEnv DocumentFragment
-contentRdr state = pure $ 
-  contentHtml $ 
-    refreshHtml state.lastUpdated (\event -> dispatch Update state) -- TODO: don't pass in state
-    <> clickCounter state.clicks (\event -> dispatch Clicked state) -- TODO: don't pass in state
-    <> decorations
-    <> unicorns
-    <> renderTotalClicks state.totalClicks
+contentRdr state = do
+  {dispatch} <- ask
+  pure $ 
+    contentHtml $ 
+      refreshHtml state.lastUpdated (\event -> dispatch Update)
+      <> clickCounter state.clicks (\event -> dispatch Clicked)
+      <> decorations
+      <> unicorns
+      <> renderTotalClicks state.totalClicks
 
 wholeApp :: AppState -> Reader AppEnv DocumentFragment
 wholeApp state = 
   pure header
   <> contentRdr state
-  <> refreshDebugRdr state
+  <> refreshDebugRdr
   <> headerHtmlRdr 
 
-appEnv :: AppEnv
-appEnv = {
+appEnv :: AppState -> AppEnv
+appEnv state = {
   lastUpdated: runFn0 getDate,
   env: Dev,
-  title: "World's Best Purescript App"
+  title: "World's Best Purescript App",
+  dispatch: \action -> appDispatch action state
 }  
 
 main :: AppState -> Unit
-main state = rerender $ runReader (wholeApp state) appEnv
+main state = rerender $ runReader (wholeApp state) (appEnv state)
 
-dispatch :: Action -> AppState -> Unit -- use State monad instead of passing in state?
-dispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
-dispatch Update state = main $ state { lastUpdated = (runFn0 getDate), totalClicks = state.totalClicks + 1 }
-dispatch DebugClicked state = main state 
+appDispatch :: Action -> AppState -> Unit -- use State monad instead of passing in state?
+appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
+appDispatch Update state = main $ state { lastUpdated = (runFn0 getDate), totalClicks = state.totalClicks + 1 }
+appDispatch DebugClicked state = main state 
