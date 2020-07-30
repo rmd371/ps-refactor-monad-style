@@ -57,3 +57,5 @@ exports.refreshDebugHtml = lastUpdated => onClick =>
       <button onclick=${onClick}>Debug Mode</button>
     </strong>
   `;
+
+exports.emptyHtml = html``

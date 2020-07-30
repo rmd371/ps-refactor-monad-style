@@ -1,7 +1,7 @@
 # ps-refactor-monad-style
 
+x Add Reader monad
 * Remove nanohtml/nanomorph
-* Add Reader monad
 * Add View monad
 * Remove state from dispatch calls
 * Use monad transformer
