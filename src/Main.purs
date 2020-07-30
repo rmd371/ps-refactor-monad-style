@@ -59,8 +59,8 @@ contentRdr state = pure $
     <> renderTotalClicks state.totalClicks
 
 wholeApp :: AppState -> Reader AppEnv DocumentFragment
-wholeApp state = 
-  pure header
+wholeApp state = pure emptyHtml 
+  <> pure header
   <> contentRdr state
   <> refreshDebugRdr state
   <> headerHtmlRdr 
