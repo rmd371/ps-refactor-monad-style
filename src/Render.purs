@@ -13,5 +13,5 @@ foreign import getDate :: Fn0 Date
 
 data DocumentFragment = Type
 -- allow the operator (<>) to be used to concatenate document fragements by implementing the append function
-instance semigroupDocumentFragment :: Semiring Unit => Semigroup DocumentFragment where
+instance semigroupDocumentFragment :: Semigroup DocumentFragment where
   append df1 df2 = concatFragments [df1, df2]

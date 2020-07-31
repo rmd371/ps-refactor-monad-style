@@ -5,7 +5,14 @@ You can edit this file as you like.
 { name =
     "my-project"
 , dependencies =
-    [ "console", "datetime", "effect", "psci-support", "smolder", "web-dom" ]
+    [ "console"
+    , "contravariant"
+    , "datetime"
+    , "effect"
+    , "psci-support"
+    , "smolder"
+    , "web-dom"
+    ]
 , packages =
     ./packages.dhall
 , sources =
