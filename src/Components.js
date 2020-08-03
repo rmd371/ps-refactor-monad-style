@@ -17,6 +17,9 @@ exports.refreshHtml = lastUpdated => onClick => html`
     Click To Update
   </button>
 `;
+
+exports.headerTitleHtml = title => html`${title}`;
+
 exports.headerHtml = title =>
   html`
     <header style="position: fixed; top: 0; left: 50%; margin-left: -50%;">

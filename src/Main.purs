@@ -2,14 +2,16 @@ module Main where
 
 import Prelude
 
-import Components (header, headerHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml, emptyHtml)
+import Components (header, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml)
 import Control.Monad.Reader (Reader, ask, runReader)
+--import Reader (Reader(..), ask, runReader)
 import Data.Date (Date)
+import Data.Foldable (foldl)
 import Data.Function.Uncurried (runFn0)
 import Effect (Effect)
 import Effect.Console (log)
-import View (bindedView)
-import Render (rerender, getDate, DocumentFragment)
+import Render (rerender, getDate)
+import View (View, cmapView, ofView, pureView, emptyView, runView)
 
 --import Web.DOM (DocumentFragment)
 
@@ -33,42 +35,58 @@ type AppEnv = {
   dispatch :: Action -> Unit
 }
 
--- clickCounter :: Int -> String
--- clickCounter clicks = "<div>You've clicked " <> (show clicks) <> " times</div><button onclick='dispatch(\"this works\")'>Click Me</button>"
--- clickCounter :: Int -> String
--- clickCounter clicks = (render $ div $ do text ("You've clicked " <> (show clicks) <> " times")) 
---   <> (render $ button #! on "click" (\event -> log "boom!") $ text "boom")
-
-headerHtmlRdr :: Reader AppEnv DocumentFragment
-headerHtmlRdr = do
+headerReader :: forall s. Reader AppEnv (View s)
+headerReader = do
   {title} <- ask
-  pure $ headerHtml title
+  pure $ ofView $ headerTitleHtml title
 
-refreshDebugRdr :: Reader AppEnv DocumentFragment
+appHeader :: forall s. Reader AppEnv (View s)
+appHeader = map (\v -> map headerHtml v) headerReader
+
+refreshDebugRdr :: forall s. Reader AppEnv (View s)
 refreshDebugRdr = do
   {env, lastUpdated, dispatch} <- ask
   pure $ 
     case env of
-      Dev -> refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked)
-      _ -> emptyHtml
+      Dev -> ofView $ refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked)
+      _ -> emptyView
 
-contentRdr :: AppState -> Reader AppEnv DocumentFragment
-contentRdr state = do
+renderClickMe :: Reader AppEnv (View Int)
+renderClickMe = do
   {dispatch} <- ask
-  pure $ 
-    contentHtml $ 
-      refreshHtml state.lastUpdated (\event -> dispatch Update)
-      <> clickCounter state.clicks (\event -> dispatch Clicked)
-      <> decorations
-      <> unicorns
-      <> renderTotalClicks state.totalClicks
+  pure $ pureView $ \clicks -> clickCounter clicks (\event -> dispatch Clicked)
 
-wholeApp :: AppState -> Reader AppEnv DocumentFragment
-wholeApp state = pure emptyHtml 
-  <> pure header
-  <> contentRdr state
+renderRefresh :: Reader AppEnv (View Date)
+renderRefresh = do
+  {dispatch} <- ask
+  pure $ pureView $ \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
+
+renderDecorations :: forall s. View s
+renderDecorations = ofView $ decorations <> unicorns
+
+totalClicks :: View Int
+totalClicks = pureView renderTotalClicks
+
+children :: Array (Reader AppEnv (View AppState))
+children = [
+  map (cmapView \state -> state.lastUpdated) renderRefresh,
+  map (cmapView \state -> state.clicks) renderClickMe,
+  pure renderDecorations,
+  pure $ cmapView (\state -> state.totalClicks) totalClicks
+]
+
+contentViews :: Reader AppEnv (View AppState)
+contentViews = foldl (<>) (pure emptyView) children
+
+content :: Reader AppEnv (View AppState)
+content = map (\v -> map contentHtml v) contentViews
+
+wholeApp :: Reader AppEnv (View AppState)
+wholeApp = pure emptyView 
+  <> pure (ofView header)
+  <> content
+  <> appHeader 
   <> refreshDebugRdr
-  <> headerHtmlRdr 
 
 appEnv :: AppState -> AppEnv
 appEnv state = {
@@ -79,8 +97,8 @@ appEnv state = {
 }  
 
 main :: AppState -> Unit
---main state = rerender $ runReader (wholeApp state) (appEnv state)
-main state = rerender $ headerHtml $ bindedView "a"
+main state = rerender $ runView (runReader wholeApp $ appEnv state) state
+--main state = rerender $ bindedView "a"
 
 appDispatch :: Action -> AppState -> Unit -- use State monad instead of passing in state?
 appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
