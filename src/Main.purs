@@ -8,7 +8,9 @@ import Data.Date (Date)
 import Data.Function.Uncurried (runFn0)
 import Effect (Effect)
 import Effect.Console (log)
+import View (bindedView)
 import Render (rerender, getDate, DocumentFragment)
+
 --import Web.DOM (DocumentFragment)
 
 
@@ -77,7 +79,8 @@ appEnv state = {
 }  
 
 main :: AppState -> Unit
-main state = rerender $ runReader (wholeApp state) (appEnv state)
+--main state = rerender $ runReader (wholeApp state) (appEnv state)
+main state = rerender $ headerHtml $ bindedView "a"
 
 appDispatch :: Action -> AppState -> Unit -- use State monad instead of passing in state?
 appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
