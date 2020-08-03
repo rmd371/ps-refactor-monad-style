@@ -4,15 +4,13 @@ import Prelude
 
 import Components (header, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml)
 import Control.Monad.Reader (Reader, ask, runReader)
---import Reader (Reader(..), ask, runReader)
 import Data.Date (Date)
 import Data.Foldable (foldl)
 import Data.Function.Uncurried (runFn0)
 import Effect (Effect)
 import Effect.Console (log)
-import Render (rerender, getDate)
+import Render (getDate, rerender)
 import View (View, cmapView, ofView, pureView, emptyView, runView)
-
 --import Web.DOM (DocumentFragment)
 
 
@@ -62,7 +60,7 @@ renderRefresh = do
   pure $ pureView $ \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
 
 renderDecorations :: forall s. View s
-renderDecorations = ofView $ decorations <> unicorns
+renderDecorations = pureView $ \state -> decorations <> unicorns
 
 totalClicks :: View Int
 totalClicks = pureView renderTotalClicks

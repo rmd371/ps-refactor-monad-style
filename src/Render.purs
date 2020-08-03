@@ -1,4 +1,4 @@
-module Render (rerender, concatFragments, getDate, DocumentFragment) where
+module Render (rerender, concatFragments, getDate, DocumentFragment, consoleLog) where
 
 import Prelude
 
@@ -10,6 +10,7 @@ import Effect (Effect)
 foreign import rerender :: DocumentFragment -> Unit
 foreign import concatFragments :: Array DocumentFragment -> DocumentFragment
 foreign import getDate :: Fn0 Date
+foreign import consoleLog :: forall a. a -> a
 
 data DocumentFragment = Type
 -- allow the operator (<>) to be used to concatenate document fragements by implementing the append function
