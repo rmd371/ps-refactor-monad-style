@@ -41,7 +41,7 @@ instance askReader :: MonadAsk e (Reader e) where
   ask = Reader (\e -> e)
 
 --derive newtype instance applicativeReader :: Apply (Reader e) => Applicative (Reader e)
-instance applicativeReader :: Apply (Reader s) => Applicative (Reader s) where
+instance applicativeReader :: Applicative (Reader s) where
   -- pure :: forall a. a -> f a
   pure e = Reader (\_ -> e)
 

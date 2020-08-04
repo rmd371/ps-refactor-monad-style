@@ -12,7 +12,7 @@ derive newtype instance semigroupOp :: Semigroup a ⇒ Semigroup (View s a)
 derive newtype instance functorStat3 :: Functor (View s)
 derive newtype instance applyReader :: Apply (View s)
 derive newtype instance bindReader :: Bind (View s)
-derive newtype instance applicativeReader :: Apply (View e) => Applicative (View e)
+derive newtype instance applicativeReader :: Applicative (View e)
 -- instance monadReader :: Monad (View s)
 -- derive newtype instance monadAskReader :: MonadAsk e (View e)
 
