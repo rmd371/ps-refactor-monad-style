@@ -1,7 +1,8 @@
-module Reader (Reader(Reader), ofReader, runReader) where
+module Reader (Reader(Reader), runReader) where
 
 import Prelude
-import Control.Monad.Reader.Class (class MonadAsk, ask)
+
+import Control.Monad.Reader.Class (class MonadAsk)
 
 -- NOTES
 -- All reader types could be derived from monad, but are written out for practice and clarity
@@ -32,8 +33,17 @@ instance bindReader :: Bind (Reader e) where
   -- bind :: forall a b. m a -> (a -> m b) -> m b
   bind (Reader render) otherReaderFn = Reader \env -> runReader (otherReaderFn $ render env) env
 
+instance monadReader :: Monad (Reader e)
+
+-- derive newtype instance monadAskReader :: MonadAsk e (Reader e)
+instance askReader :: MonadAsk e (Reader e) where
+  -- ask :: forall e a. (e -> a) -> Reader e a
+  ask = Reader (\e -> e)
+
+--derive newtype instance applicativeReader :: Apply (Reader e) => Applicative (Reader e)
+instance applicativeReader :: Apply (Reader s) => Applicative (Reader s) where
+  -- pure :: forall a. a -> f a
+  pure e = Reader (\_ -> e)
+
 runReader :: forall e a. Reader e a -> e -> a
 runReader (Reader renderFn) env = renderFn env 
-
-ofReader :: forall e a. a -> Reader e a
-ofReader a = Reader \env -> a

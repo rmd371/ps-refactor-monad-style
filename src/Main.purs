@@ -3,7 +3,9 @@ module Main where
 import Prelude
 
 import Components (header, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml)
-import Control.Monad.Reader (Reader, ask, runReader)
+--import Control.Monad.Reader (Reader, ask, runReader)
+import Control.Monad.Reader.Class (ask)
+import Reader (Reader, runReader)
 import Data.Date (Date)
 import Data.Foldable (foldl)
 import Data.Function.Uncurried (runFn0)

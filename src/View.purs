@@ -2,9 +2,8 @@ module View (View, ofView, emptyView, cmapView, pureView, runView) where
 
 import Prelude
 
-import Reader (Reader(..), ofReader)
---import Control.Monad.Reader (Reader, ask, runReader)
-import Components (emptyHtml, headerHtml)
+import Components (emptyHtml)
+import Reader (Reader(..))
 import Render (DocumentFragment)
 
 -- NOTES (or what I've learned)
@@ -21,7 +20,7 @@ cmapView :: forall s1 s2. (s2 -> s1) -> View s1 -> View s2
 cmapView adapterFn (Reader render) = Reader \state -> render $ adapterFn state
 
 emptyView :: forall s. View s
-emptyView = ofReader emptyHtml
+emptyView = pure emptyHtml
 
 ofView :: forall s. DocumentFragment -> View s
 ofView df = Reader \state -> df
@@ -31,15 +30,3 @@ runView (Reader renderFn) state = renderFn state
 
 pureView :: forall s. (s -> DocumentFragment) -> View s
 pureView f = Reader f
-
--- test methods
-
--- myview :: View String
--- myview = Reader \s -> headerHtml $ s <> "1"
-
--- chainFn :: DocumentFragment -> View String
--- chainFn df = Reader \s -> df <> (headerHtml $ s <> "2")
-
--- bindedView :: String -> DocumentFragment
--- bindedView str = runView (bind myview chainFn) $ str
-----bindedView str = runView myview $ str
