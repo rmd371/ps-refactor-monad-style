@@ -1,5 +1,7 @@
 const html = require("nanohtml");
 
+exports.appDivHtml = fragment => html`<div id="app">${fragment}</div>`;
+
 exports.header = html`<h1>World's best app</h1>`;
 
 exports.contentHtml = someHtml =>

@@ -1,4 +1,4 @@
-module Components (headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, header, decorations, unicorns, renderTotalClicks, refreshDebugHtml) where
+module Components (appDivHtml, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, header, decorations, unicorns, renderTotalClicks, refreshDebugHtml) where
 
 import Prelude
 
@@ -9,6 +9,7 @@ import Web.Event.Event (Event)
 
 --foreign import data DocumentFragment :: Type
 
+foreign import appDivHtml :: DocumentFragment -> DocumentFragment
 foreign import header :: DocumentFragment
 foreign import contentHtml :: DocumentFragment -> DocumentFragment
 foreign import headerHtml :: DocumentFragment -> DocumentFragment

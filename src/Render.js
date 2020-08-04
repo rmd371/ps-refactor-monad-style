@@ -7,7 +7,7 @@ exports.rerender = fragment => {
   return nanomorph(
     app,
     //html`<div id="app">${raw(fragment)}</div>`
-    html`<div id="app">${fragment}</div>`
+    html`${fragment}`
     );
   }
 
