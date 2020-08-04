@@ -12,7 +12,7 @@ import Data.Function.Uncurried (runFn0)
 import Effect (Effect)
 import Effect.Console (log)
 import Render (getDate, rerender)
-import View (View, cmapView, ofView, pureView, emptyView, runView)
+import View (View(..), DocumentFragmentView, cmapView, emptyView, runView)
 --import Web.DOM (DocumentFragment)
 
 
@@ -35,39 +35,39 @@ type AppEnv = {
   dispatch :: Action -> Unit
 }
 
-headerReader :: forall s. Reader AppEnv (View s)
+headerReader :: forall s. Reader AppEnv (DocumentFragmentView s)
 headerReader = do
   {title} <- ask
-  pure $ ofView $ headerTitleHtml title
+  pure $ pure $ headerTitleHtml title
 
-appHeader :: forall s. Reader AppEnv (View s)
+appHeader :: forall s. Reader AppEnv (DocumentFragmentView s)
 appHeader = map (\v -> map headerHtml v) headerReader
 
-refreshDebugRdr :: forall s. Reader AppEnv (View s)
+refreshDebugRdr :: forall s. Reader AppEnv (DocumentFragmentView s)
 refreshDebugRdr = do
   {env, lastUpdated, dispatch} <- ask
   pure $ 
     case env of
-      Dev -> ofView $ refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked)
+      Dev -> pure $ refreshDebugHtml lastUpdated (\event -> dispatch DebugClicked)
       _ -> emptyView
 
-renderClickMe :: Reader AppEnv (View Int)
+renderClickMe :: Reader AppEnv (DocumentFragmentView Int)
 renderClickMe = do
   {dispatch} <- ask
-  pure $ pureView $ \clicks -> clickCounter clicks (\event -> dispatch Clicked)
+  pure $ View \clicks -> clickCounter clicks (\event -> dispatch Clicked)
 
-renderRefresh :: Reader AppEnv (View Date)
+renderRefresh :: Reader AppEnv (DocumentFragmentView Date)
 renderRefresh = do
   {dispatch} <- ask
-  pure $ pureView $ \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
+  pure $ View \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
 
-renderDecorations :: forall s. View s
-renderDecorations = pureView $ \state -> decorations <> unicorns
+renderDecorations :: forall s. DocumentFragmentView s
+renderDecorations = View \_ -> decorations <> unicorns
 
-totalClicks :: View Int
-totalClicks = pureView renderTotalClicks
+totalClicks :: DocumentFragmentView Int
+totalClicks = View renderTotalClicks
 
-children :: Array (Reader AppEnv (View AppState))
+children :: Array (Reader AppEnv (DocumentFragmentView AppState))
 children = [
   map (cmapView \state -> state.lastUpdated) renderRefresh,
   map (cmapView \state -> state.clicks) renderClickMe,
@@ -75,15 +75,15 @@ children = [
   pure $ cmapView (\state -> state.totalClicks) totalClicks
 ]
 
-contentViews :: Reader AppEnv (View AppState)
+contentViews :: Reader AppEnv (DocumentFragmentView AppState)
 contentViews = foldl (<>) (pure emptyView) children
 
-content :: Reader AppEnv (View AppState)
+content :: Reader AppEnv (DocumentFragmentView AppState)
 content = map (\v -> map contentHtml v) contentViews
 
-wholeApp :: Reader AppEnv (View AppState)
+wholeApp :: Reader AppEnv (DocumentFragmentView AppState)
 wholeApp = pure emptyView 
-  <> pure (ofView header)
+  <> pure (pure header)
   <> content
   <> appHeader 
   <> refreshDebugRdr

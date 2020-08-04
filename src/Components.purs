@@ -1,11 +1,10 @@
-module Components (headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, header, decorations, unicorns, renderTotalClicks, refreshDebugHtml, emptyHtml) where
+module Components (headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, header, decorations, unicorns, renderTotalClicks, refreshDebugHtml) where
 
 import Prelude
 
 import Data.Date (Date)
 import Effect (Effect)
-
-import Render (DocumentFragment)
+import DocumentFragment (DocumentFragment)
 import Web.Event.Event (Event)
 
 --foreign import data DocumentFragment :: Type
@@ -20,4 +19,3 @@ foreign import decorations :: DocumentFragment
 foreign import unicorns :: DocumentFragment
 foreign import renderTotalClicks :: Int -> DocumentFragment
 foreign import refreshDebugHtml :: Date -> (Event -> Unit) -> DocumentFragment
-foreign import emptyHtml :: DocumentFragment

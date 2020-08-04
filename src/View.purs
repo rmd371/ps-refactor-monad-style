@@ -1,32 +1,28 @@
-module View (View, ofView, emptyView, cmapView, pureView, runView) where
+module View (View(View), DocumentFragmentView, runView, cmapView, emptyView) where
 
 import Prelude
 
-import Components (emptyHtml)
-import Reader (Reader(..))
-import Render (DocumentFragment)
+import DocumentFragment (DocumentFragment)
 
--- NOTES (or what I've learned)
--- A type signature of "newtype View s a = View (s -> a)" makes our current methods function exactly as a reader
--- However, the cmap instance method cannot be defined as it wants to change the type of the right hand varible "a", not "s"
--- Using the type signature "newtype View s = View (s -> DocumentFragment)" doesn't seem to allow map or bind to be defined
---   since we do NOT wanted to change the type of "s" in either operation
--- Therefore, View can be defined using a Reader as "type View s = Reader s DocumentFragment"
--- View can then define a cmap method (but it appears types cannot have instance methods)  
+newtype View s a = View (s -> a)
+type DocumentFragmentView s = View s DocumentFragment
 
-type View s = Reader s DocumentFragment
+-- see Reader for implementations of these functions (they would be the same for both)
+derive newtype instance semigroupOp :: Semigroup a ⇒ Semigroup (View s a)
+derive newtype instance functorStat3 :: Functor (View s)
+derive newtype instance applyReader :: Apply (View s)
+derive newtype instance bindReader :: Bind (View s)
+derive newtype instance applicativeReader :: Apply (View e) => Applicative (View e)
+-- instance monadReader :: Monad (View s)
+-- derive newtype instance monadAskReader :: MonadAsk e (View e)
 
-cmapView :: forall s1 s2. (s2 -> s1) -> View s1 -> View s2
-cmapView adapterFn (Reader render) = Reader \state -> render $ adapterFn state
+-- it doesn't seem the types line up for a cmap instance method since we want to change e and not a
+--derive newtype instance contravariantLogger :: Contravariant (View e)
+cmapView :: forall s1 s2 a. (s2 -> s1) -> View s1 a -> View s2 a
+cmapView adapterFn (View render) = View \state -> render $ adapterFn state
 
-emptyView :: forall s. View s
-emptyView = pure emptyHtml
+emptyView :: forall s a. Monoid a => View s a
+emptyView = pure mempty
 
-ofView :: forall s. DocumentFragment -> View s
-ofView df = Reader \state -> df
-
-runView :: forall s. View s -> s -> DocumentFragment
-runView (Reader renderFn) state = renderFn state 
-
-pureView :: forall s. (s -> DocumentFragment) -> View s
-pureView f = Reader f
+runView :: forall s a. View s a -> s -> a
+runView (View renderFn) state = renderFn state 

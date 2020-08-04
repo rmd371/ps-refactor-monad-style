@@ -11,8 +11,6 @@ exports.rerender = fragment => {
     );
   }
 
-exports.concatFragments = fragments => fragments.reduce((prev, curr) => html`${prev}${curr}`, html``);
-
 exports.getDate = () => new Date();
 
 exports.consoleLog = a => { console.log(a); return a; }
