@@ -15,7 +15,7 @@ exports.refreshHtml = lastUpdated => onClick => html`
   <div>
     Last updated at ${lastUpdated.toLocaleString()}.
   </div>
-  <button onclick=${onClick}>
+  <button onclick=${e => onClick(e)()}>
     Click To Update
   </button>
 `;
@@ -30,12 +30,11 @@ exports.headerHtml = title =>
   `;
 
 exports.clickCounter = clicks => onClick => {
-  console.log('onClick', onClick)
   return html`
     <div>
       You've clicked ${clicks} times
     </div>
-    <button onclick=${onClick}>
+    <button onclick=${e => onClick(e)()}>
       Click Me
    </button>
   `;
@@ -55,10 +54,13 @@ exports.renderTotalClicks = totalClicks =>
     <div>${totalClicks}</div>
   `;
 
-exports.refreshDebugHtml = lastUpdated => onClick => 
-  html`
-    <strong style="position: fixed; bottom: 0; width: 100vw;">
-      ${lastUpdated}
-      <button onclick=${onClick}>Debug Mode</button>
-    </strong>
-  `;
+exports.refreshDebugHtml = function(lastUpdated) {
+  return function(onClick) {
+    return html`
+      <strong style="position: fixed; bottom: 0; width: 100vw;">
+        ${lastUpdated}
+        <button onclick=${e => onClick(e)()}>Debug Mode</button>
+      </strong>
+    `;
+  }
+} 

@@ -32,7 +32,7 @@ type AppEnv = {
   lastUpdated :: Date,
   env :: Env,
   title :: String,
-  dispatch :: Action -> Unit
+  dispatch :: Action -> Effect Unit
 }
 
 debugLastUpdated :: Reader AppEnv (DocumentFragmentView Date)
@@ -101,11 +101,10 @@ appEnv state = {
   dispatch: \action -> appDispatch action state
 }  
 
-main :: AppState -> Unit
+main :: AppState -> Effect Unit
 main state = rerender $ runView (runReader wholeApp $ appEnv state) state
---main state = rerender $ bindedView "a"
 
-appDispatch :: Action -> AppState -> Unit -- use State monad instead of passing in state?
+appDispatch :: Action -> AppState -> Effect Unit -- use State monad instead of passing in state?
 appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
 appDispatch Update state = main $ state { lastUpdated = (runFn0 getDate), totalClicks = state.totalClicks + 1 }
 appDispatch DebugClicked state = main state 

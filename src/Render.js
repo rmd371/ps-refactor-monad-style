@@ -2,7 +2,7 @@ const html = require("nanohtml");
 //const raw = require('nanohtml/raw')
 const nanomorph = require("nanomorph");
 
-exports.rerender = fragment => {
+exports.rerender = fragment => () => {
   console.log('fragment', fragment)
   return nanomorph(
     app,

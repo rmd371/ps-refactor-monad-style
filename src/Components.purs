@@ -14,9 +14,9 @@ foreign import header :: DocumentFragment
 foreign import contentHtml :: DocumentFragment -> DocumentFragment
 foreign import headerHtml :: DocumentFragment -> DocumentFragment
 foreign import headerTitleHtml :: String -> DocumentFragment
-foreign import refreshHtml :: Date -> (Event -> Unit) -> DocumentFragment
-foreign import clickCounter :: Int -> (Event -> Unit) -> DocumentFragment
+foreign import refreshHtml :: Date -> (Event -> Effect Unit) -> DocumentFragment
+foreign import clickCounter :: Int -> (Event -> Effect Unit) -> DocumentFragment
 foreign import decorations :: DocumentFragment
 foreign import unicorns :: DocumentFragment
 foreign import renderTotalClicks :: Int -> DocumentFragment
-foreign import refreshDebugHtml :: Date -> (Event -> Unit) -> DocumentFragment
+foreign import refreshDebugHtml :: Date -> (Event -> Effect Unit) -> DocumentFragment

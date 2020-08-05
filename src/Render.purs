@@ -9,6 +9,6 @@ import Effect (Effect)
 
 --import Web.DOM (DocumentFragment)
 
-foreign import rerender :: DocumentFragment -> Unit
+foreign import rerender :: DocumentFragment -> Effect Unit
 foreign import getDate :: Fn0 Date
 foreign import consoleLog :: forall a. a -> a
