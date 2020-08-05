@@ -11,6 +11,4 @@ exports.rerender = fragment => () => {
     );
   }
 
-exports.getDate = () => new Date();
-
 exports.consoleLog = a => { console.log(a); return a; }

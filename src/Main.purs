@@ -3,16 +3,15 @@ module Main where
 import Prelude
 
 import Components (appDivHtml, header, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml)
---import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.Reader.Class (ask)
-import Reader (Reader, runReader)
-import Data.Date (Date)
 import Data.Foldable (foldl)
-import Data.Function.Uncurried (runFn0)
+import Data.JSDate (JSDate, now)
 import Effect (Effect)
 import Effect.Console (log)
-import Render (getDate, rerender)
+import Reader (Reader, runReader)
+import Render (rerender)
 import View (View(..), DocumentFragmentView, cmapView, emptyView, runView)
+
 --import Web.DOM (DocumentFragment)
 
 
@@ -22,20 +21,20 @@ import View (View(..), DocumentFragmentView, cmapView, emptyView, runView)
 
 data Action = Clicked | Update | DebugClicked
 type AppState = {
-  lastUpdated :: Date,
+  lastUpdated :: JSDate,
   clicks :: Int,
   totalClicks :: Int
 }
 
 data Env = Prod | Dev
 type AppEnv = {
-  lastUpdated :: Date,
+  lastUpdated :: JSDate,
   env :: Env,
   title :: String,
   dispatch :: Action -> Effect Unit
 }
 
-debugLastUpdated :: Reader AppEnv (DocumentFragmentView Date)
+debugLastUpdated :: Reader AppEnv (DocumentFragmentView JSDate)
 debugLastUpdated = do
   {dispatch} <- ask
   pure $ View \d -> refreshDebugHtml d (\event -> dispatch DebugClicked)
@@ -45,14 +44,14 @@ renderClickMe = do
   {dispatch} <- ask
   pure $ View \clicks -> clickCounter clicks (\event -> dispatch Clicked)
 
-debug :: Reader AppEnv (DocumentFragmentView Date)
+debug :: Reader AppEnv (DocumentFragmentView JSDate)
 debug = do
   {env} <- ask
   case env of
     Prod -> pure emptyView
     _ -> debugLastUpdated
 
-renderRefresh :: Reader AppEnv (DocumentFragmentView Date)
+renderRefresh :: Reader AppEnv (DocumentFragmentView JSDate)
 renderRefresh = do
   {dispatch} <- ask
   pure $ View \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
@@ -93,18 +92,22 @@ wholeApp = pure emptyView
   <> appHeader 
   >>= \view -> pure $ view >>= \df -> pure $ appDivHtml df -- >>= is chain or bind
 
-appEnv :: AppState -> AppEnv
-appEnv state = {
-  lastUpdated: runFn0 getDate,
+appEnv :: JSDate -> AppState -> AppEnv
+appEnv date state = {
+  lastUpdated: date,
   env: Dev,
   title: "World's Best Purescript App",
   dispatch: \action -> appDispatch action state
 }  
 
 main :: AppState -> Effect Unit
-main state = rerender $ runView (runReader wholeApp $ appEnv state) state
+main state = do
+  d <- now
+  rerender $ runView (runReader wholeApp $ appEnv d state) state
 
 appDispatch :: Action -> AppState -> Effect Unit -- use State monad instead of passing in state?
 appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
-appDispatch Update state = main $ state { lastUpdated = (runFn0 getDate), totalClicks = state.totalClicks + 1 }
+appDispatch Update state = do
+  d <- now
+  main $ state { lastUpdated = d, totalClicks = state.totalClicks + 1 }
 appDispatch DebugClicked state = main state 
