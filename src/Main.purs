@@ -1,4 +1,4 @@
-module Main where
+module Main (main, AppState, appDispatch, Action(..)) where
 
 import Prelude
 
@@ -6,18 +6,12 @@ import Components (appDivHtml, header, headerHtml, headerTitleHtml, clickCounter
 import Control.Monad.Reader.Class (ask)
 import Data.Foldable (foldl)
 import Data.JSDate (JSDate, now)
+import DocumentFragment (DocumentFragment)
 import Effect (Effect)
-import Effect.Console (log)
 import Reader (Reader, runReader)
-import Render (rerender)
 import View (View(..), DocumentFragmentView, cmapView, emptyView, runView)
 
 --import Web.DOM (DocumentFragment)
-
-
---import Text.Smolder.HTML (div, button)
---import Text.Smolder.Markup (text, (#!), on)
---import Text.Smolder.Renderer.String (render)
 
 data Action = Clicked | Update | DebugClicked
 type AppState = {
@@ -92,22 +86,25 @@ wholeApp = pure emptyView
   <> appHeader 
   >>= \view -> pure $ view >>= \df -> pure $ appDivHtml df -- >>= is chain or bind
 
-appEnv :: JSDate -> AppState -> AppEnv
-appEnv date state = {
+appEnv :: JSDate -> (Action -> Effect Unit) -> AppEnv
+appEnv date dispatch = {
   lastUpdated: date,
   env: Dev,
   title: "World's Best Purescript App",
-  dispatch: \action -> appDispatch action state
+  dispatch: dispatch --\action -> appDispatch action state
 }  
 
-main :: AppState -> Effect Unit
-main state = do
-  d <- now
-  rerender $ runView (runReader wholeApp $ appEnv d state) state
+main :: (DocumentFragment -> Effect Unit) -> AppState -> Effect Unit
+main render state = 
+  let rerender = main render
+      dispatch = \action -> appDispatch rerender now action state
+  in do
+    d <- now
+    render $ runView (runReader wholeApp $ appEnv d dispatch) state
 
-appDispatch :: Action -> AppState -> Effect Unit -- use State monad instead of passing in state?
-appDispatch Clicked state = main $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
-appDispatch Update state = do
-  d <- now
-  main $ state { lastUpdated = d, totalClicks = state.totalClicks + 1 }
-appDispatch DebugClicked state = main state 
+appDispatch :: (AppState -> Effect Unit) -> Effect JSDate -> Action -> AppState -> Effect Unit
+appDispatch rerender dateM Clicked state = rerender $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
+appDispatch rerender dateM Update state = do
+  d <- dateM
+  rerender $ state { lastUpdated = d, totalClicks = state.totalClicks + 1 }
+appDispatch rerender dateM DebugClicked state = rerender state 

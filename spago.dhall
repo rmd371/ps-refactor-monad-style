@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "now"
   , "psci-support"
   , "smolder"
+  , "spec"
   , "web-dom"
   ]
 , packages = ./packages.dhall

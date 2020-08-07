@@ -1,7 +1,8 @@
-module DocumentFragment (DocumentFragment, concatFragments) where
+module DocumentFragment (DocumentFragment, concatFragments, toString) where
 
 import Prelude
 
+foreign import toString :: DocumentFragment -> String
 foreign import concatFragments :: Array DocumentFragment -> DocumentFragment
 foreign import emptyHtml :: DocumentFragment
 
