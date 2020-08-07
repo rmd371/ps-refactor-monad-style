@@ -6,4 +6,4 @@ x Add View monad
 x Remove state from dispatch calls
 * Use monad transformer
 * Use free monads?
-* Unit testing?
+x Unit testing?
