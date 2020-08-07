@@ -3,13 +3,14 @@ module Main (main, AppState, appDispatch, Action(..)) where
 import Prelude
 
 import Components (appDivHtml, header, headerHtml, headerTitleHtml, clickCounter, contentHtml, refreshHtml, decorations, unicorns, renderTotalClicks, refreshDebugHtml)
+import Control.Monad.Reader (ReaderT(..), lift, mapReaderT, runReaderT)
 import Control.Monad.Reader.Class (ask)
 import Data.Foldable (foldl)
 import Data.JSDate (JSDate, now)
 import DocumentFragment (DocumentFragment)
 import Effect (Effect)
-import Reader (Reader, runReader)
-import View (View(..), DocumentFragmentView, cmapView, emptyView, runView)
+import Prelude as DocumentFragment
+import View (View(..), DocumentFragmentView, cmapView, runView)
 
 --import Web.DOM (DocumentFragment)
 
@@ -28,27 +29,31 @@ type AppEnv = {
   dispatch :: Action -> Effect Unit
 }
 
-debugLastUpdated :: Reader AppEnv (DocumentFragmentView JSDate)
+type ReaderView s = ReaderT AppEnv (View s) DocumentFragment
+consReaderView :: forall s. (s -> DocumentFragment) -> ReaderView s
+consReaderView f = ReaderT \_ -> View f
+
+debugLastUpdated :: ReaderView JSDate
 debugLastUpdated = do
   {dispatch} <- ask
-  pure $ View \d -> refreshDebugHtml d (\event -> dispatch DebugClicked)
+  consReaderView \d -> refreshDebugHtml d (\event -> dispatch DebugClicked)
 
-renderClickMe :: Reader AppEnv (DocumentFragmentView Int)
+renderClickMe :: ReaderView Int
 renderClickMe = do
   {dispatch} <- ask
-  pure $ View \clicks -> clickCounter clicks (\event -> dispatch Clicked)
+  lift $ View \clicks -> clickCounter clicks (\event -> dispatch Clicked)
 
-debug :: Reader AppEnv (DocumentFragmentView JSDate)
+debug :: ReaderView JSDate
 debug = do
   {env} <- ask
   case env of
-    Prod -> pure emptyView
+    Prod -> pure DocumentFragment.mempty
     _ -> debugLastUpdated
 
-renderRefresh :: Reader AppEnv (DocumentFragmentView JSDate)
+renderRefresh :: ReaderView JSDate
 renderRefresh = do
   {dispatch} <- ask
-  pure $ View \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
+  consReaderView \lastUpdated -> refreshHtml lastUpdated (\event -> dispatch Update)
 
 renderDecorations :: forall s. DocumentFragmentView s
 renderDecorations = View \_ -> decorations <> unicorns
@@ -56,35 +61,35 @@ renderDecorations = View \_ -> decorations <> unicorns
 totalClicks :: DocumentFragmentView Int
 totalClicks = View renderTotalClicks
 
-children :: Array (Reader AppEnv (DocumentFragmentView AppState))
+children :: Array (ReaderView AppState)
 children = [
-  renderRefresh <#> (cmapView \state -> state.lastUpdated),
-  renderClickMe <#> (cmapView \state -> state.clicks) ,
-  pure renderDecorations,
-  pure $ totalClicks # cmapView (\state -> state.totalClicks) 
+  mapReaderT (cmapView \state -> state.lastUpdated) renderRefresh,
+  mapReaderT (cmapView \state -> state.clicks) renderClickMe,
+  lift renderDecorations,
+  lift $ totalClicks # cmapView (\state -> state.totalClicks) -- # is $ (Apply) with the arguments flipped
 ]
 
-contentViews :: Reader AppEnv (DocumentFragmentView AppState)
-contentViews = foldl (<>) (pure emptyView) children
+contentViews :: ReaderView AppState
+contentViews = foldl (<>) (pure DocumentFragment.mempty) children
 
-content :: Reader AppEnv (DocumentFragmentView AppState)
-content = map (\v -> map contentHtml v) contentViews
+content :: ReaderView AppState
+content = map contentHtml contentViews
 
-headerReader :: forall s. Reader AppEnv (DocumentFragmentView s)
+headerReader :: forall s. ReaderView s
 headerReader = do
   {title} <- ask
-  pure $ pure $ headerTitleHtml title
+  pure $ headerTitleHtml title
 
-appHeader :: forall s. Reader AppEnv (DocumentFragmentView s)
-appHeader = map (\v -> map headerHtml v) headerReader
+appHeader :: forall s. ReaderView s
+appHeader = map (\df -> headerHtml df) headerReader
 
-wholeApp :: Reader AppEnv (DocumentFragmentView AppState)
-wholeApp = pure emptyView 
-  <> pure (pure header)
+wholeApp :: ReaderView AppState
+wholeApp = pure DocumentFragment.mempty
+  <> pure header
   <> content
-  <> (debug <#> (cmapView \state -> state.lastUpdated))
-  <> appHeader 
-  >>= \view -> pure $ view >>= \df -> pure $ appDivHtml df -- >>= is chain or bind
+  <> mapReaderT (cmapView \state -> state.lastUpdated) debug
+  <> appHeader
+  <#> appDivHtml -- <#> is "map flipped"
 
 appEnv :: JSDate -> (Action -> Effect Unit) -> AppEnv
 appEnv date dispatch = {
@@ -100,11 +105,11 @@ main render state =
       dispatch = \action -> appDispatch rerender now action state
   in do
     d <- now
-    render $ runView (runReader wholeApp $ appEnv d dispatch) state
+    render $ runView (runReaderT wholeApp $ appEnv d dispatch) state
 
 appDispatch :: (AppState -> Effect Unit) -> Effect JSDate -> Action -> AppState -> Effect Unit
-appDispatch rerender dateM Clicked state = rerender $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
+appDispatch rerender _ Clicked state = rerender $ state { clicks = state.clicks + 1, totalClicks = state.totalClicks + 1 }
 appDispatch rerender dateM Update state = do
   d <- dateM
   rerender $ state { lastUpdated = d, totalClicks = state.totalClicks + 1 }
-appDispatch rerender dateM DebugClicked state = rerender state 
+appDispatch rerender _ DebugClicked state = rerender state 

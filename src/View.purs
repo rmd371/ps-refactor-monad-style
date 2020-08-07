@@ -2,6 +2,7 @@ module View (View(View), DocumentFragmentView, runView, cmapView, emptyView) whe
 
 import Prelude
 
+import Control.Monad.Reader (class MonadAsk)
 import DocumentFragment (DocumentFragment)
 
 newtype View s a = View (s -> a)
@@ -13,8 +14,8 @@ derive newtype instance functorStat3 :: Functor (View s)
 derive newtype instance applyReader :: Apply (View s)
 derive newtype instance bindReader :: Bind (View s)
 derive newtype instance applicativeReader :: Applicative (View e)
--- instance monadReader :: Monad (View s)
--- derive newtype instance monadAskReader :: MonadAsk e (View e)
+instance monadReader :: Monad (View s)
+derive newtype instance monadAskView :: MonadAsk e (View e)
 
 -- it doesn't seem the types line up for a cmap instance method since we want to change e and not a
 --derive newtype instance contravariantLogger :: Contravariant (View e)
